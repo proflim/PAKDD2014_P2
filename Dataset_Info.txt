@@ -1,0 +1,21 @@
+Data Information
+
+
+SaleTrain: Jan 2005 ~ Feb 2008
+  module_category
+  component_category
+  year/month
+  number_sale
+
+RepairTrain: Feb 2005 ~ Dec 2009
+  module_category
+  component_category
+  year/month(of sale)
+  year/month(of repair)
+  number_repair
+
+Output_TargetID_Mapping: map repair prediction to the target ID.
+
+
+Predict: Jan 2010 ~ Jul 2011
+(Predict 19 real values for each component)
