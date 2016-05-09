@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-#from pandas.stats.moments import ewma
+from pandas.stats.moments import ewma
 from scipy.optimize import curve_fit
 
 
 pred_period = 19
-
+num_of_months_used = 6
 
 def get_year_month(year_month):
     ''' splits the year_month column to year and month and returns them in int format'''
@@ -46,7 +46,7 @@ def get_repair_complete(module,component):
     return repair_merged[cols_req_final]
 
 #Use simple moving average
-def predict_simpleMA(x,span,periods = pred_period):
+def predict_EWMA(x,span=3,periods = pred_period):
     x_predict = np.zeros((span+periods,))
     x_predict[:span] = x[-span:]
     pred =  ewma(x_predict,span)[span:]
@@ -56,13 +56,37 @@ def predict_simpleMA(x,span,periods = pred_period):
     return pred
 
 
-def func(x, N0, lmbda):
-    return N0 * power(e, -lmbda*t)
+# logarithmic function
+def log_func(x, p1,p2):
+  return p1*np.log(x)+p2
 
+def exp_func(x, N0, lmbda):
+    return N0 * np.exp( -lmbda*x)
 
 
 # y = N0 * e ^(-lambda*t)
-def predict_expDecay(x, periods = pred_period):
+def predict_expDecay(y, span, periods = pred_period):
+    y1 = y[-span:]
+    x = pd.DataFrame( [i+1 for i in range(span)] )
+    #x = pd.DataFrame([1,2,3,4,5,6])
+    x = np.array(x)
+    x = x.reshape(span,)
+    y1 = np.array(y1)
+
+    popt,pcov = curve_fit(exp_func, x, y1, maxfev=5000)
+    print(popt)
+
+    pred = np.zeros((periods,))  #(19,)
+    for i in range(periods):
+        pred[i] = exp_func((span+i), popt[0], abs(popt[1]))
+
+    pred = pred.round()
+    pred[pred < 0] = 0
+    return pred
+
+
+
+
 
 
 ################################################################################
@@ -107,10 +131,25 @@ for i in range(0,output_target.shape[0],pred_period):
     component = output_target['component_category'][i]
 
     # missing periods are filled with 0
-    X = get_repair_complete(module,component).fillna(0)
-    pred = predictExpDecay(X.number_repair)
-    #submission['target'][i:i+pred_period] = pred
+    Y = get_repair_complete(module,component).fillna(0)
+    Y = Y['number_repair']
+    checkEmpty_data = Y[-num_of_months_used:]
+    count=0
+    for j in range(6):
+        if (checkEmpty_data.iloc[j]==0):
+            count+=1
 
-#submission.to_csv('beat_benchmark_1.csv',index=False)
-#print('submission file created')
+    print(str(module))
+    print(str(component))
+    print(str(checkEmpty_data.sum()))
+
+    if(count>4):
+        pred = predict_EWMA(Y)
+    else:
+        pred = predict_expDecay(Y, num_of_months_used)
+
+    submission['target'][i:i+pred_period] = pred
+
+submission.to_csv('expDecay_pred.csv',index=False)
+print('submission file created')
 print('done')
