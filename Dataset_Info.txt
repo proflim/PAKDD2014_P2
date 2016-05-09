@@ -19,3 +19,15 @@ Output_TargetID_Mapping: map repair prediction to the target ID.
 
 Predict: Jan 2010 ~ Jul 2011
 (Predict 19 real values for each component)
+
+
+SalesTrain:
+	Contrived(Artificial)
+	If you load it into Excel and pivot table, the sum of module and component are identical.
+	Just spread around the date range. 
+
+Repair Date earlier than Sales Date
+Repair data but no Sales Data
+
+Negative Sales Number: Items purchased previously that are returned.
+	

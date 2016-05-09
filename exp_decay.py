@@ -75,7 +75,8 @@ cols_requ = ['module_category','component_category','year_repair','month_repair'
 cols_groupby = ['module_category','component_category','year_repair','month_repair']
 repair_train_summ = repair_train[cols_requ].groupby(cols_groupby).sum()
 
-# Process SaleTrain
+# Process SaleTrain: SaleTrain Not used.
+'''
 sale_train['year_sale'],sale_train['month_sale'] = get_year_month(sale_train['year/month'])
 
 sale1_min_year = sale_train['year_sale1'].min()
@@ -84,17 +85,21 @@ sale1_max_year = sale_train['year_sale1'].max()
 cols_requ = ['module_category','component_category','year_sale1','month_sale1','number_sale']
 cols_groupby = ['module_category','component_category','year_sale1','month_sale1']
 sale_train_summ = sale_train[cols_requ].groupby(cols_groupby).sum()
+'''
 
 
-
-print('predicting')
+print('printing')
+#predict for each module and category
 for i in range(0,output_target.shape[0],pred_period):
     module = output_target['module_category'][i]
-    category = output_target['component_category'][i]
-    #print 'predicting for',module,category
-    X = get_repair_complete(module,category).fillna(0)
-    pred = predict(X.number_repair, span=3)
-    submission['target'][i:i+pred_period] = pred
+    component = output_target['component_category'][i]
 
-submission.to_csv('beat_benchmark_1.csv',index=False)
-print('submission file created')
+    # missing periods are filled with 0
+    X = get_repair_complete(module,component).fillna(0)
+    X.to_csv(str(module)+"_"+str(component)+".csv", index=False)
+    #pred = predict(X.number_repair, span=3)
+    #submission['target'][i:i+pred_period] = pred
+
+#submission.to_csv('beat_benchmark_1.csv',index=False)
+#print('submission file created')
+print('done')
