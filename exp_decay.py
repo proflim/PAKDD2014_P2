@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+import math
 from pandas.stats.moments import ewma
 from scipy.optimize import curve_fit
 
-
+## Parameters
 pred_period = 19
 num_of_months_used = 6
 
@@ -60,8 +61,9 @@ def predict_EWMA(x,span=3,periods = pred_period):
 def log_func(x, p1,p2):
   return p1*np.log(x)+p2
 
-def exp_func(x, N0, lmbda):
-    return N0 * np.exp( -lmbda*x)
+def exp_func(x, a,b):
+    return a * np.exp( -b*x)
+
 
 
 # y = N0 * e ^(-lambda*t)
@@ -73,7 +75,7 @@ def predict_expDecay(y, span, periods = pred_period):
     x = x.reshape(span,)
     y1 = np.array(y1)
 
-    popt,pcov = curve_fit(exp_func, x, y1, maxfev=5000)
+    popt,pcov = curve_fit(exp_func, x, y1, maxfev=10000)
     print(popt)
 
     pred = np.zeros((periods,))  #(19,)
@@ -135,21 +137,19 @@ for i in range(0,output_target.shape[0],pred_period):
     Y = Y['number_repair']
     checkEmpty_data = Y[-num_of_months_used:]
     count=0
-    for j in range(6):
+    for j in range(num_of_months_used):
         if (checkEmpty_data.iloc[j]==0):
             count+=1
 
-    print(str(module))
-    print(str(component))
-    print(str(checkEmpty_data.sum()))
+    print(str(module)+" "+str(component)+": "+str(checkEmpty_data.sum()))
 
-    if(count>4):
+    if(count>0):
         pred = predict_EWMA(Y)
     else:
         pred = predict_expDecay(Y, num_of_months_used)
 
     submission['target'][i:i+pred_period] = pred
 
-submission.to_csv('expDecay_pred.csv',index=False)
+submission.to_csv('expDecay_pred_'+str(num_of_months_used)+'.csv',index=False)
 print('submission file created')
 print('done')
