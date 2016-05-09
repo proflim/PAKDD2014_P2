@@ -41,8 +41,15 @@ def get_repair_complete(module,component):
 
     return repair_merged[cols_req_final]
 
+#Use simple moving average
+def simpleMApredict(x,span,periods = pred_period):
+    x_predict = np.zeros((span+periods,))
+    x_predict[:span] = x[-span:]
+    pred =  ewma(x_predict,span)[span:]
 
-
+    pred = pred.round()
+    pred[pred < 0] = 0
+    return pred
 
 
 ################################################################################
@@ -53,14 +60,6 @@ output_target = pd.read_csv('Data/Output_TargetID_Mapping.csv')
 submission = pd.read_csv('Data/SampleSubmission.csv')
 pred_period = 19
 
-def predict(x,span,periods = pred_period):
-    x_predict = np.zeros((span+periods,))
-    x_predict[:span] = x[-span:]
-    pred =  ewma(x_predict,span)[span:]
-
-    pred = pred.round()
-    pred[pred < 0] = 0
-    return pred
 
 # Process RepairTrain
 #Separate year/month to two columns
@@ -77,15 +76,23 @@ cols_groupby = ['module_category','component_category','year_repair','month_repa
 repair_train_summ = repair_train[cols_requ].groupby(cols_groupby).sum()
 
 
+#Print Total repairNum for each Module Component
+cols_requ1 = ['module_category','component_category','number_repair']
+cols_groupby1 =  ['module_category','component_category']
+all_repairNum_Sum = repair_train[cols_requ1].groupby(cols_groupby1).sum()
+all_repairNum_Sum.to_csv('module_component_Sum.csv')
 
-print('predicting')
+all_repairNum = pd.DataFrame()
+print('printing')
+#predict for each module and category
 for i in range(0,output_target.shape[0],pred_period):
     module = output_target['module_category'][i]
-    category = output_target['component_category'][i]
-    #print 'predicting for',module,category
-    X = get_repair_complete(module,category).fillna(0)
-    pred = predict(X.number_repair, span=5)
-    submission['target'][i:i+pred_period] = pred
+    component = output_target['component_category'][i]
 
-submission.to_csv('beat_benchmark_2.csv',index=False)
-print('submission file created')
+    # missing periods are filled with 0
+    X = get_repair_complete(module,component).fillna(0)
+    all_repairNum[str(module)+str(component)] = X['number_repair']
+    X.to_csv(str(module)+"_"+str(component)+".csv", index=False)
+
+all_repairNum.to_csv('all_repairNum.csv', index=False)
+print('done')

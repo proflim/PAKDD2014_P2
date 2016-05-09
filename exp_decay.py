@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
-from pandas.stats.moments import ewma
+#from pandas.stats.moments import ewma
+from scipy.optimize import curve_fit
+
+
+pred_period = 19
 
 
 def get_year_month(year_month):
@@ -41,8 +45,8 @@ def get_repair_complete(module,component):
 
     return repair_merged[cols_req_final]
 
-
-def predict(x,span,periods = pred_period):
+#Use simple moving average
+def predict_simpleMA(x,span,periods = pred_period):
     x_predict = np.zeros((span+periods,))
     x_predict[:span] = x[-span:]
     pred =  ewma(x_predict,span)[span:]
@@ -52,13 +56,21 @@ def predict(x,span,periods = pred_period):
     return pred
 
 
+def func(x, N0, lmbda):
+    return N0 * power(e, -lmbda*t)
+
+
+
+# y = N0 * e ^(-lambda*t)
+def predict_expDecay(x, periods = pred_period):
+
+
 ################################################################################
 
 repair_train = pd.read_csv('Data/RepairTrain.csv')
 sale_train = pd.read_csv('Data/SaleTrain.csv')
 output_target = pd.read_csv('Data/Output_TargetID_Mapping.csv')
 submission = pd.read_csv('Data/SampleSubmission.csv')
-pred_period = 19
 
 
 # Process RepairTrain
@@ -96,8 +108,7 @@ for i in range(0,output_target.shape[0],pred_period):
 
     # missing periods are filled with 0
     X = get_repair_complete(module,component).fillna(0)
-    X.to_csv(str(module)+"_"+str(component)+".csv", index=False)
-    #pred = predict(X.number_repair, span=3)
+    pred = predictExpDecay(X.number_repair)
     #submission['target'][i:i+pred_period] = pred
 
 #submission.to_csv('beat_benchmark_1.csv',index=False)
