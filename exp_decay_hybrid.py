@@ -188,6 +188,46 @@ for i in range(0,output_target.shape[0],pred_period):
     #arr3 = ['M7P26', 'M7P04'] # 24 months log
     #arr4 = ['M7P13'] # 24 months power
 
+    arr = [
+    'M2P01',
+    'M2P02',
+    'M2P04',
+    'M4P04',
+    'M4P06',
+    'M4P09',
+    'M4P17',
+    'M4P22',
+    'M4P30',
+    'M5P05',
+    'M5P11',
+    'M5P12',
+    'M5P13',
+    'M5P16',
+    'M5P20',
+    'M5P24',
+    'M5P30',
+    'M7P02',
+    'M7P04',
+    'M7P05',
+    'M7P09',
+    'M7P12',
+    'M7P13',
+    'M7P15',
+    'M7P17',
+    'M7P22',
+    'M7P25',
+    'M7P26',
+    'M8P11',
+    'M8P17',
+    'M8P25',
+    'M8P28',
+    'M9P02',
+    'M9P05',
+    'M9P12',
+    'M9P21',
+    'M9P22']
+
+
     modulecomponent = str(module)+str(component)
     '''
     if modulecomponent in arr1:
@@ -204,15 +244,20 @@ for i in range(0,output_target.shape[0],pred_period):
         print("4: "+modulecomponent)
         pred = predict_expDecay(Y, 24)
     '''
-
-    if (count>1):
-       pred = predict_EWMA(Y)
-    else:
-        pred = predict_expDecay(Y, num_of_months_used)
+    if modulecomponent in arr:
+        if(count<4 & count>0):
+            pred = predict_expDecay(Y, num_of_months_used)
+            selectedModule[modulecomponent]= pred
+            submission['target'][i:i+pred_period] = pred
+        print(modulecomponent)
+    #elif (count>0):
+    #    pred = predict_EWMA(Y)
+    #else:
+    #    pred = predict_expDecay(Y, num_of_months_used)
 
     #print(modulecomponent +": "+ str(pred))
 
-submission.to_csv('Hybrid_pred2.csv',index=False)
+submission.to_csv('Hybrid_pred3.csv',index=False)
 selectedModule.to_csv('selectedModule.csv',index=False)
 print('submission file created')
 print('done')
